@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d281d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Caixa">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Caixa do Damablo</title>
+<style>
+:root{--bg:#edf2ec;--panel:#fff;--ink:#12251b;--mut:#66786d;--line:#dbe4da;--pu:#1b7a4b;--pu2:#2ea562;--gold:#d7e35a;--green:#12804f;--red:#d6454f;--paper:#fffef8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI Variable Display","Segoe UI",Roboto,system-ui,sans-serif;font-size:14px;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--pu2);outline-offset:2px}
+small{color:var(--mut);font-size:12px}
+kbd{text-transform:uppercase;display:inline-block;min-width:22px;padding:2px 6px;border:1px solid #cddccf;border-bottom-width:3px;border-radius:6px;background:linear-gradient(#fff,#e6efe6);font:700 11px ui-monospace,Menlo,Consolas,monospace;color:#385443;text-align:center}
+/* topo */
+.top{position:sticky;top:0;z-index:5;background:#0d281d;color:#fff}
+.bar{height:56px;max-width:1240px;margin:auto;padding:0 16px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;letter-spacing:-.2px;white-space:nowrap}
+.mark{width:30px;height:30px;border-radius:10px;background:linear-gradient(145deg,#e6ef7a,#8fcf3f);display:grid;place-items:center;color:#0d281d;font-size:15px;font-weight:900;font-style:normal;transform:rotate(-6deg);box-shadow:0 2px 0 #5a9a22}
+nav{display:flex;gap:2px;flex:1;overflow:auto;scrollbar-width:none}
+nav button{padding:9px 16px;border-radius:999px;color:#a8c3b2;font-size:16px;font-weight:650;white-space:nowrap}
+nav button:hover{color:#fff}nav button.active{background:var(--gold);color:#0d281d;font-weight:800}
+.pill{display:flex;align-items:center;gap:8px;font-size:15px;color:#cfe3d6;white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--red)}.dot.on{background:#b9e84f;box-shadow:0 0 0 3px #b9e84f33}
+.prt{background:#ffffff14;border-radius:8px;padding:6px 10px;font-weight:600}
+#cashStatus{font-weight:700;font-size:16px;color:#fff}#cashStatus small{color:#a8c3b2;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}#cashStatus b{font-weight:800;text-transform:capitalize}.prt:hover{background:#ffffff26}
+/* telas */
+.screen{display:none}.screen.active{display:block}
+.wrap{max-width:920px;margin:0 auto;padding:22px 16px 40px}
+.wrap h1{font-size:26px;font-weight:800;margin:0 0 18px;letter-spacing:-.6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 1px 0 #ffffff,0 8px 24px -14px #0d281d33}
+.card h3{font-size:15px;font-weight:800;letter-spacing:-.2px;margin:0 0 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+/* PDV */
+.pdv{max-width:1240px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.tile{position:relative;text-align:left;background:var(--panel);border:1px solid var(--line);border-bottom:4px solid var(--gold);border-radius:20px;padding:14px 14px 14px;display:flex;flex-direction:column;gap:8px;min-height:104px;box-shadow:0 10px 22px -16px #0d281d55;transition:border-color .12s,box-shadow .12s,transform .12s}
+.tile:hover{border-color:#a6d3b8;border-bottom-color:var(--gold)}.tile:active{transform:translateY(1px)}.tile.sel{border-color:var(--pu);border-bottom-color:var(--pu);box-shadow:0 0 0 3px #1b7a4b26}
+.tile.sel{background:var(--c,var(--pu));border-color:var(--c,var(--pu));border-bottom-color:var(--c,var(--pu));color:var(--t,#fff);box-shadow:0 12px 24px -10px var(--c,var(--pu))}
+.tile.sel .pr,.tile.sel .lo{color:var(--t,#fff)}
+.tile:disabled{opacity:.45;cursor:not-allowed}
+.tile kbd{align-self:flex-start}
+.tile b{font-size:18px;font-weight:800;letter-spacing:-.4px;line-height:1.15;padding-right:34px}.tile .pr{margin-top:auto;color:var(--pu);font-weight:800;font-size:22px;letter-spacing:-.6px}
+.tile .lo{position:absolute;right:11px;top:13px;font-size:11px;color:var(--red);font-weight:700}
+.entry{margin-bottom:12px;min-height:64px;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 16px;color:var(--mut)}
+.entry.on{border-color:var(--c,var(--pu));color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--c,var(--pu)) 22%,transparent)}
+.entry.on input{border-bottom-color:var(--c,var(--pu))}
+.entry .en-name{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
+.entry .en-x{color:var(--mut);font-size:18px}
+.entry input{width:96px;border:0;border-bottom:2px solid var(--pu);background:none;text-align:center;font-size:28px;font-weight:800;outline:none;padding:0}
+.entry .en-hint{margin-left:auto;font-size:12px;color:var(--mut);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cart{margin-top:12px;padding:6px 16px 16px}
+.cl{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.cn{flex:1;min-width:0;font-weight:600}.cn small{display:block;font-weight:400}
+.cq{display:flex;align-items:center;gap:6px}
+.cq button{width:30px;height:30px;border-radius:10px;background:#e3f1e7;color:var(--pu);font-weight:800}
+.cq b{min-width:24px;text-align:center}
+.x{color:#a0b1a6;font-size:20px;padding:0 4px;line-height:1}.x:hover{color:var(--red)}
+.empty{text-align:center;color:var(--mut);padding:26px 8px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:16px}
+.foot small{display:block}.foot strong{font-size:38px;font-weight:800;letter-spacing:-1.2px;color:var(--pu)}
+.btn{padding:12px 18px;border-radius:14px;background:#e3f1e7;color:#15603c;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.sm{padding:7px 11px;font-size:12px}.btn.block{width:100%}
+.btn.primary{background:linear-gradient(135deg,#176b42,#2ea562);color:#fff;box-shadow:0 10px 20px -10px #1b7a4bcc}
+.btn.danger{background:#fff0f1;color:var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.primary kbd{background:#ffffff26;border-color:#ffffff40;color:#fff}
+.foot .btn{padding:17px 26px;font-size:16px;font-weight:800}
+/* nota */
+.right{position:sticky;top:64px;max-height:calc(100vh - 72px);overflow:auto;padding-bottom:4px}
+.paper{position:relative;max-width:320px;margin:0 auto;background:var(--paper);padding:20px 18px 8px;font:15px/1.5 ui-monospace,"Courier New",monospace;color:#2b2a26;box-shadow:0 10px 28px #0d281d24}
+.paper::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;background:linear-gradient(-45deg,transparent 7px,var(--paper) 0),linear-gradient(45deg,transparent 7px,var(--paper) 0);background-size:14px 10px}
+.paper.out{animation:feed .35s ease-out}
+@keyframes feed{from{transform:translateY(-22px);opacity:.3}to{transform:none;opacity:1}}
+.ph{text-align:center;display:flex;flex-direction:column;gap:2px;margin-bottom:10px}.ph b{font-size:14px}.ph span{font-size:11px;color:#807d6e}
+.paper hr{border:0;border-top:1px dashed #bdb9a8;margin:9px 0}
+.rl,.it{display:flex;justify-content:space-between;gap:10px}.it{margin:4px 0;justify-content:flex-start;align-items:baseline;gap:6px;font-size:13px;font-weight:700}.it i{font-style:normal;font-size:9px;font-weight:600;color:#6b6858}.it b{font-size:13px}.rl.top{font-weight:700}.it small{display:block;color:#8a8776;font-size:11px}
+.tot{font-weight:700;font-size:14px}
+.none{text-align:center;color:#a19e8d;padding:18px 0}
+.pf{text-align:center;padding:4px 0 16px;display:flex;flex-direction:column;gap:3px;font-size:11px;color:#807d6e}.pf b{color:#2b2a26;font-size:13px;letter-spacing:1px}
+.right #printBtn{margin:22px auto 0;display:flex;width:100%;max-width:320px}
+.paybox{position:sticky;bottom:0;max-width:320px;margin:14px auto 4px;padding:14px 16px;box-shadow:0 -6px 18px -10px #0d281d55,0 8px 24px -14px #0d281d33}
+.paybox .foot{flex-direction:column;align-items:stretch;gap:12px;padding-top:0}.paybox .foot strong{font-size:40px}.paybox .foot .btn{width:100%;padding:16px 20px}
+/* formulários */
+label,.lbl{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:0 0 6px}
+input,select{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;outline:none;margin-bottom:12px}
+input:focus,select:focus{border-color:var(--pu)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.grow{flex:1;min-width:0}.grow small{display:block}
+.row b.low{color:var(--red);background:#d6454f1f;padding:3px 10px;border-radius:999px;font-size:13px;animation:blink 1s ease-in-out infinite}
+.tile .lo{animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);font-weight:650;margin:0 0 14px;cursor:pointer}.chk input{width:20px;height:20px;margin:0;accent-color:var(--pu)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:#f0f5ef;border-radius:16px;padding:14px}.stat strong{display:block;font-size:24px;font-weight:800;letter-spacing:-.6px;margin-top:4px}
+.badge{border-radius:20px;padding:3px 9px;font-size:11px;font-weight:700;background:#e6f6ef;color:var(--green)}
+/* modais */
+.back{position:fixed;inset:0;background:#08170f99;display:none;align-items:center;justify-content:center;z-index:20;padding:14px;backdrop-filter:blur(2px)}.back.show{display:flex}
+.modal{width:min(100%,420px);background:#fff;border-radius:26px;padding:26px;box-shadow:0 30px 60px -20px #08170fcc;max-height:90vh;overflow:auto}
+.modal h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0 0 18px}
+.acts{display:flex;gap:10px;margin-top:6px}.acts .btn{flex:1}
+.paytot{text-align:center;padding:4px 0 16px}.paytot strong{display:block;font-size:46px;font-weight:800;letter-spacing:-1.5px;color:var(--pu);margin-top:2px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.seg button{border:1.5px solid var(--line);border-radius:16px;padding:11px 6px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px}
+.seg button.on{border-color:var(--pu);background:#e9f5ed;color:var(--pu)}
+#recv{font-size:20px;font-weight:700;margin-bottom:10px}
+.chg{display:flex;justify-content:space-between;align-items:center;background:#e9f5ed;border-radius:12px;padding:12px 14px;margin-bottom:12px}.chg b{font-size:20px;color:var(--green)}.chg b.bad{color:var(--red);font-size:15px}
+.warn{font-size:12px;color:#9a6a0a;background:#fff6dd;border-radius:10px;padding:9px 11px;margin:0 0 12px}
+#dlgX{white-space:pre-line;color:var(--mut);margin:0 0 16px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:#0d281d;color:#fff;padding:12px 20px;border-radius:14px;border-left:4px solid var(--gold);opacity:0;pointer-events:none;transition:.2s;z-index:40;max-width:92vw;font-weight:600}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.ok{border-color:#3ddc97}.toast.err{border-color:var(--red)}
+@media(max-width:900px){.pdv{grid-template-columns:1fr}.right{position:static;max-height:none;overflow:visible}.grid2{grid-template-columns:1fr}}
+@media(max-width:640px){.brand span{display:none}.bar{gap:10px}.back{align-items:flex-end}.modal{border-radius:26px 26px 0 0}.entry .en-hint{display:none}.tiles{grid-template-columns:repeat(2,1fr)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{.top,.left,.right .btn,.toast,.back{display:none!important}.pdv{display:block;padding:0}.right{position:static}body{background:#fff}.paper{box-shadow:none;max-width:72mm;margin:0}.paper::after{display:none}}
+.stm{text-align:center;padding:4px 0 20px}.stm-q{display:block;font-size:68px;font-weight:800;color:var(--pu);letter-spacing:-2px;line-height:1}.stm-n{display:block;font-size:22px;font-weight:800;margin-top:8px}.stm small{display:block;margin-top:8px;font-size:13px}
+#stModal.show .modal{animation:pop .24s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:translateY(20px) scale(.92);opacity:0}to{transform:none;opacity:1}}
+.okv{text-align:center;padding:14px 0 10px}.okv svg{width:92px;height:92px}.okv circle{fill:none;stroke:var(--pu2);stroke-width:5;stroke-dasharray:252;stroke-dashoffset:252;animation:dr .45s ease-out forwards}.okv path{fill:none;stroke:var(--pu);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:dr .3s .35s ease-out forwards}
+@keyframes dr{to{stroke-dashoffset:0}}.okv b{display:block;font-size:22px;font-weight:800;margin-top:10px}
+</style>
+</head>
+<body>
+<header class="top"><div class="bar">
+ <div class="brand"><i class="mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d281d" stroke-width="2.6" stroke-linecap="round"><path d="M8 21 17 3"/><path d="M6.4 16.6l3.4 1.5M9.4 10.6l3.4 1.5M12.6 4.4l3.2 1.4"/></svg></i><span>Caixa do Damablo</span></div>
+ <nav id="nav"><button class="active" data-screen="pedido">Pedido</button><button data-screen="caixa">Caixa</button><button data-screen="estoque">Estoque</button></nav>
+ <button class="pill prt" id="fsBtn" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+ <button class="pill prt" id="prtConn" title="Conectar impressora Bluetooth"></button>
+ <button class="pill prt" id="netStatus"></button>
+ <div class="pill" id="cashStatus"></div>
+</div></header>
+
+<section id="pedido" class="screen active"><div class="pdv">
+ <div class="left">
+  <div class="entry" id="entry"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="card cart"><div id="cartLines"></div></div>
+ </div>
+ <aside class="right"><div class="paper" id="paper"></div><button class="btn" id="printBtn">Imprimir nota</button>
+  <div class="card paybox"><div class="foot"><div><small>Total</small><strong id="cartTotal">R$ 0,00</strong></div><button class="btn primary" id="finalizeBtn" disabled>Finalizar <kbd>Espaço</kbd></button></div></div>
+ </aside>
+</div></section>
+
+
+<section id="caixa" class="screen"><div class="wrap"><h1>Caixa</h1>
+ <div class="card"><div class="stats"><div class="stat"><small>Dinheiro esperado</small><strong id="dBal">R$ 0,00</strong></div><div class="stat"><small>Vendas em dinheiro</small><strong id="dCash">R$ 0,00</strong></div><div class="stat"><small>Vendas em Pix</small><strong id="dPix">R$ 0,00</strong></div><div class="stat"><small>Vendas em cartão</small><strong id="dCard">R$ 0,00</strong></div><div class="stat"><small>Saídas</small><strong id="dExp">R$ 0,00</strong></div><div class="stat"><small>Vendas</small><strong id="salesCount">0</strong></div><div class="stat"><small>Faturamento</small><strong id="salesRevenue">R$ 0,00</strong></div></div></div>
+ <div class="card" id="failCard" style="display:none"><h3>Envios com erro</h3><small id="failTxt" style="display:block;margin-bottom:12px"></small><button class="btn danger block" id="failClear">Descartar envios com erro</button></div>
+ <div class="grid2"><div>
+  <div class="card" id="openCard"><h3>Abrir caixa</h3><label>Fundo de troco (R$)</label><input id="openingAmount" inputmode="decimal" value="0"><button class="btn primary block" id="openDrawer">Abrir caixa</button></div>
+  <div class="card" id="expenseCard"><h3>Registrar saída</h3><label>Descrição</label><input id="expenseDesc" placeholder="Ex.: compra de óleo"><label>Valor (R$)</label><input id="expenseAmount" inputmode="decimal" placeholder="0,00"><button class="btn block" id="addExpense">Registrar saída</button></div>
+  </div><div>
+  <div class="card" id="reprintCard" style="display:none"><h3>Último fechamento</h3><button class="btn block" id="reprintClose">Imprimir novamente</button></div>
+  <div class="card" id="closeCard"><h3>Fechar caixa</h3><label for="countedAmount">Dinheiro contado (R$)</label><input id="countedAmount" inputmode="decimal" autocomplete="off" placeholder="0,00"><button class="btn danger block" id="closeDrawer">Fechar caixa</button></div>
+ </div></div>
+</div></section>
+
+
+
+<section id="estoque" class="screen"><div class="wrap"><h1>Estoque</h1>
+ <div class="grid2">
+  <div class="card"><h3>Adicionar ao estoque</h3><label for="stP">Produto</label><select id="stP"></select><label for="stW">Quem está recebendo</label><input id="stW" autocomplete="off" placeholder="Nome de quem recebeu"><label for="stQ">Quantidade que chegou</label><input id="stQ" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="Ex.: 50"><button class="btn primary block" id="stAdd">Adicionar</button><small style="display:block;margin-top:10px">Só adiciona. Para corrigir ou dar baixa, fale com o administrador.</small></div>
+  <div class="card"><h3>Saldo atual</h3><div id="stList"></div></div>
+ </div>
+ <div class="card"><h3>Recebido hoje</h3><div id="stRec"></div></div>
+</div></section>
+
+<div class="back" id="payModal"><div class="modal"><h2>Finalizar venda</h2><div id="payBody"></div><div class="acts"><button class="btn" id="payCancel">Cancelar <kbd>Apagar</kbd></button><button class="btn primary" id="payOk">Confirmar <kbd>Enter</kbd></button></div></div></div>
+<div class="back" id="openModal"><div class="modal"><h2>Abrir caixa</h2><label for="opName">Nome de quem vai abrir o caixa</label><input id="opName" autocomplete="off" placeholder="Seu nome"><label for="opAmount">Fundo de troco (R$)</label><input id="opAmount" inputmode="decimal" autocomplete="off" value="85,00"><div class="acts"><button class="btn primary" id="opOk">Abrir caixa</button></div></div></div>
+<div class="back" id="stModal"><div class="modal"><div id="stmBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== COLE AQUI os dados do seu projeto Supabase (Project Settings > API) ===== */
+const SB='https://brznqpvmjwerrekewwcd.supabase.co',KEY='sb_publishable_1WWiTQK4nQN-elXkTWiZFg_qPqXUD4N';
+/* ================================================================================ */
+const $=id=>document.getElementById(id);
+const money=v=>{const n=Math.round(Number(v||0)*100)/100,[i,d]=Math.abs(n).toFixed(2).split('.');return(n<0?'-':'')+'R$ '+i.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+','+d};
+const num=s=>Number(String(s).trim().replace(',','.'))||0;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(4,'0');
+const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const uid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&3|8).toString(16)});
+let tt;function toast(m,t=''){const e=$('toast');e.textContent=m;e.className='toast show '+t;clearTimeout(tt);tt=setTimeout(()=>e.className='toast',2800)}
+/* ---- conexão com o Supabase (sem biblioteca) ---- */
+let au=null,ME=null; /* sem login: usa só a chave pública */
+const saveAu=j=>{au=j;j?localStorage.setItem('au',JSON.stringify(j)):localStorage.removeItem('au')};
+const NET={net:true,message:'sem internet'};
+async function refreshTok(){try{const r=await fetch(SB+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:au.refresh_token})});if(!r.ok)return false;saveAu(await r.json());return true}catch(e){return 'net'}}
+async function api(path,o={}){
+ const go=()=>fetch(SB+path,{method:o.m||'GET',headers:{apikey:KEY,'Content-Type':'application/json',Authorization:'Bearer '+(au?au.access_token:KEY)},body:o.b?JSON.stringify(o.b):undefined});
+ let r;try{r=await go()}catch(e){throw NET}
+ if(r.status===401&&au){const t=await refreshTok();if(t==='net')throw NET;if(!t){saveAu(null);throw{auth:true,message:'Sessão expirada'}}try{r=await go()}catch(e){throw NET}}
+ const tx=await r.text();let j=null;try{j=tx?JSON.parse(tx):null}catch(e){}
+ if(!r.ok)throw{message:(j&&(j.message||j.msg))||('Erro '+r.status),code:j&&j.code};
+ return j}
+const rpc=(fn,args)=>api('/rest/v1/rpc/'+fn,{m:'POST',b:args});
+const data={shop:{name:'Caldo de Cana do Damablo',line:'',footer:'Obrigado pela preferência!'}};
+const KEYS='qwertasdfgzxcvb'.split(''),KEYRE=new RegExp('^['+KEYS.join('')+']$');
+const unl=p=>!!(p&&p.unlimited);
+const isLow=p=>!unl(p)&&p.stock<=(p.low_stock??10);
+/* ---- dados guardados no aparelho (funciona sem internet) ---- */
+const K='dmb_caixa_v2';
+let L={outbox:[],failed:[],no:0,...jget(K,{})};
+let products=L.products||[],session=L.session||null,sales=L.sales||[],expenses=L.expenses||[],lastClose=L.lastClose||null;
+if(L.shop)data.shop=L.shop;
+/* atalhos: seguem a ordem da tela, igual ao teclado: 1ª linha Q W E R T, 2ª A S D F G, 3ª Z X C V B */
+function normKeys(){products.forEach((p,i)=>{p.shortcut=KEYS[i]||null})}
+normKeys();
+let cart=[],method='Dinheiro',entry=null,lastSale=null,payOpen=false,openedAt=0,ready=false,syncing=false;
+const persist=()=>{Object.assign(L,{products,session,sales,expenses,lastClose,shop:data.shop});try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}};
+const totalCart=()=>cart.reduce((s,x)=>s+x.price*x.qty,0);
+const screenIs=id=>$(id).classList.contains('active');
+/* ---- fila de envio: tudo que acontece offline vai pra fila e sobe quando tiver rede ---- */
+function queue(fn,args){L.outbox.push({fn,args})}
+let armed=false;
+function netUI(){const n=L.outbox.length,f=L.failed.length,on=navigator.onLine;const fc=$('failCard');if(fc){fc.style.display=f?'':'none';$('failTxt').textContent=f?'Último motivo: '+[...new Set(L.failed.map(x=>x.err))].slice(0,3).join(' · '):''}$('netStatus').innerHTML=`<i class="dot${on?' on':''}"></i>${on?'Online':'Offline'}${n?' · '+n+' p/ enviar':''}${f?' · '+f+' com erro':''}`}
+async function trySync(){if(syncing||!ready||!navigator.onLine)return;syncing=true;
+ try{
+  while(L.outbox.length){const op=L.outbox[0];
+   try{await rpc(op.fn,op.args)}catch(e){if(e.net||e.auth)throw e;L.failed.push({...op,err:e.message});toast('Erro ao enviar: '+e.message,'err')}
+   L.outbox.shift();persist();netUI()}
+  if(!payOpen&&!entry)await pull();
+ }catch(e){}finally{syncing=false;netUI()}}
+const mapSale=s=>({id:s.id,no:s.no,date:s.created_at,items:(s.sale_items||[]).map(i=>({id:i.product_id,name:i.name,price:Number(i.price),qty:i.qty})),total:Number(s.total),method:s.method,received:Number(s.received),change:Number(s.troco)});
+const closeMap=r=>({operator:r.operator,closedAt:r.closed_at,expected:Number(r.expected),cash:Number(r.cash_total),opening:Number(r.opening),pix:Number(r.pix_total),card:Number(r.card_total),diff:Number(r.diff)});
+async function pull(){
+ const[p,sh,ss,lc,mx]=await Promise.all([api('/rest/v1/products?select=*&active=eq.true&order=sort_order,name'),api('/rest/v1/shop_settings?select=*&id=eq.1'),api('/rest/v1/cash_sessions?select=*&closed_at=is.null'),api('/rest/v1/cash_sessions?select=*&closed_at=not.is.null&order=closed_at.desc&limit=1'),api('/rest/v1/sales?select=no&order=no.desc&limit=1')]);
+ let sl=[],ex=[];
+ if(ss[0]){const[a,b]=await Promise.all([api('/rest/v1/sales?select=*,sale_items(*)&session_id=eq.'+ss[0].id+'&order=created_at.desc'),api('/rest/v1/expenses?select=*&session_id=eq.'+ss[0].id+'&order=created_at.desc')]);sl=a.map(mapSale);ex=b.map(e=>({id:e.id,date:e.created_at,description:e.description,amount:Number(e.amount)}))}
+ if(L.outbox.length||payOpen||entry)return; /* apareceu algo novo enquanto buscava: não sobrescreve */
+ products=p.map(x=>({...x,price:Number(x.price)}));normKeys();
+ if(sh[0])data.shop={name:sh[0].name,line:sh[0].line||'',footer:sh[0].footer||''};
+ session=ss[0]?{id:ss[0].id,operator:ss[0].operator,openedAt:ss[0].opened_at,opening:Number(ss[0].opening)}:null;
+ sales=sl;expenses=ex;lastClose=lc[0]?closeMap(lc[0]):null;L.no=Math.max(L.no,mx[0]?mx[0].no:0);
+ persist();renderAll()}
+function switchScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));if(id!=='pedido'&&entry)endEntry();renderAll();window.scrollTo(0,0)}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>switchScreen(b.dataset.screen));
+
+/* ---------- pedido ---------- */
+const PAL=[['#3b82f6','#fff'],['#facc15','#2b2300'],['#f97316','#2b1200'],['#a855f7','#fff'],['#ec4899','#fff'],['#06b6d4','#062a33'],['#ef4444','#fff'],['#64748b','#fff']];
+const tc=p=>{let i=KEYS.indexOf(p.shortcut);if(i<0)i=Math.max(0,products.findIndex(x=>x.id===p.id));return PAL[i%PAL.length]};
+function renderProducts(){$('tiles').innerHTML=products.map(p=>`<button class="tile${entry&&entry.id===p.id?' sel':''}" style="--c:${tc(p)[0]};--t:${tc(p)[1]}" ${!unl(p)&&p.stock<=0?'disabled':''} onclick="startById('${p.id}')"><kbd>${p.shortcut||'+'}</kbd>${isLow(p)?`<span class="lo">${p.stock<=0?'Sem estoque':'Restam '+p.stock}</span>`:''}<b>${esc(p.name)}</b><span class="pr">${money(p.price)}</span></button>`).join('')||'<div class="empty">Cadastre produtos na aba Produtos.</div>'}
+function startById(id){const p=products.find(x=>x.id===id);if(p)startEntry(p)}
+function startEntry(p){if(!unl(p)&&p.stock<=0){toast('Sem estoque: '+p.name,'err');return}entry=p;renderEntry();renderProducts();$('qty').focus()}
+function endEntry(){entry=null;renderEntry();renderProducts()}
+function renderEntry(){const b=$('entry');
+ if(!entry){b.className='entry';b.innerHTML='Escolha um produto pelo atalho do teclado';return}
+ b.className='entry on';b.style.setProperty('--c',tc(entry)[0]);
+ b.innerHTML=`<span class="en-name"><kbd>${entry.shortcut||'+'}</kbd>${esc(entry.name)}</span><span class="en-x">×</span><input id="qty" inputmode="numeric" autocomplete="off" maxlength="3" placeholder="1"><span class="en-hint"><kbd>Enter</kbd> adicionar <kbd>Apagar</kbd> cancelar</span>`;
+ const i=$('qty');i.oninput=()=>{i.value=i.value.replace(/\D/g,'')}}
+function confirmEntry(){if(!entry)return;const q=Math.floor(Number($('qty').value))||1;if(addToCart(entry,q))endEntry()}
+function addToCart(p,q){const l=cart.find(x=>x.id===p.id),have=l?l.qty:0;
+ if(!unl(p)&&have+q>p.stock){toast('Estoque insuficiente · disponível: '+(p.stock-have),'err');return false}
+ if(l)l.qty+=q;else cart.push({id:p.id,name:p.name,price:Number(p.price),qty:q});
+ lastSale=null;renderCart();return true}
+function chg(id,d){const x=cart.find(a=>a.id===id),p=products.find(a=>a.id===id);if(!x||!p)return;
+ if(d>0&&!unl(p)&&x.qty>=p.stock){toast('Estoque insuficiente','err');return}
+ x.qty+=d;if(x.qty<=0)cart=cart.filter(a=>a.id!==id);lastSale=null;renderCart()}
+function rm(id){cart=cart.filter(x=>x.id!==id);renderCart()}
+function renderCart(){
+ $('cartLines').innerHTML=cart.length?cart.map(x=>`<div class="cl"><div class="cq"><button onclick="chg('${x.id}',-1)">−</button><b>${x.qty}</b><button onclick="chg('${x.id}',1)">+</button></div><div class="cn">${esc(x.name)}<small>${money(x.price)} cada</small></div><b>${money(x.qty*x.price)}</b><button class="x" onclick="rm('${x.id}')" aria-label="Remover">×</button></div>`).join(''):'<div class="empty">Nenhum item ainda.</div>';
+ $('cartTotal').textContent=money(totalCart());$('finalizeBtn').disabled=!cart.length;renderPaper()}
+
+/* ---------- nota ---------- */
+function paperHTML(m){const s=data.shop;
+ const rows=m.items.map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join('')||'<div class="none">Aguardando itens</div>';
+ return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr>${rows}<hr><div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div>${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl tot"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}<hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
+function renderPaper(){let m;
+ if(cart.length)m={items:cart,total:totalCart(),no:0,date:new Date()};
+ else if(lastSale)m={items:lastSale.items,total:lastSale.total,no:lastSale.no||lastSale.id,date:new Date(lastSale.date),pay:{method:lastSale.method,received:lastSale.received,change:lastSale.change}};
+ else m={items:[],total:0,no:0,date:new Date()};
+ $('paper').innerHTML=paperHTML(m)}
+function feed(){const p=$('paper');p.classList.remove('out');void p.offsetWidth;p.classList.add('out')}
+$('printBtn').onclick=async()=>{if(lastSale&&!cart.length&&navigator.bluetooth){await printSale(lastSale,true);return}window.print()};
+
+/* ---------- pagamento ---------- */
+function openPay(){if(!cart.length){toast('Adicione itens ao pedido','err');return}
+ if(entry)endEntry();payOpen=true;method='Dinheiro';openedAt=Date.now();renderPay();$('payModal').classList.add('show')}
+function closePay(){payOpen=false;$('payModal').classList.remove('show')}
+function renderPay(){const t=totalCart();
+ $('payBody').innerHTML=`<div class="paytot"><small>Total a receber</small><strong>${money(t)}</strong></div><div class="seg">${[['Dinheiro','K'],['Cartão','L'],['Pix','Ç']].map(([m,k])=>`<button data-m="${m}" class="${m===method?'on':''}">${m}<kbd>${k}</kbd></button>`).join('')}</div>${method==='Dinheiro'?`<label for="recv">Valor recebido</label><input id="recv" inputmode="decimal" autocomplete="off" value="${t.toFixed(2).replace('.',',')}"><div class="chg"><span>Troco</span><b id="chg"></b></div>`:''}`;
+ document.querySelectorAll('#payBody .seg button').forEach(b=>b.onclick=()=>{method=b.dataset.m;renderPay()});
+ const r=$('recv');if(r){r.oninput=updChange;r.focus();r.select();updChange()}}
+function updChange(){const r=$('recv');if(!r)return;const c=num(r.value)-totalCart(),b=$('chg');
+ b.textContent=c>=-0.005?money(Math.max(0,c)):'faltam '+money(-c);b.className=c<-0.005?'bad':''}
+function confirmPay(){if(!payOpen||Date.now()-openedAt<250)return;
+ if(!session){toast('Abra o caixa antes de vender','err');return}
+ const total=totalCart();let received=total;
+ if(method==='Dinheiro'){received=num($('recv').value);if(received<total-0.005){toast('Valor recebido menor que o total','err');return}}
+ const sale={id:uid(),no:++L.no,date:new Date().toISOString(),items:cart.map(x=>({id:x.id,name:x.name,price:x.price,qty:x.qty})),total,method,received,change:Math.max(0,received-total)};
+ sale.items.forEach(x=>{const p=products.find(a=>a.id===x.id);if(p&&!unl(p))p.stock=Math.max(0,p.stock-x.qty)});
+ sales.unshift(sale);
+ queue('sync_sale',{p_id:sale.id,p_no:sale.no,p_session:session.id,p_method:method,p_received:received,p_items:sale.items,p_at:sale.date});
+ lastSale=sale;cart=[];closePay();persist();renderAll();feed();printSale(sale,true);trySync();
+ toast('Venda '+pad(sale.no)+' finalizada · '+money(total)+(method==='Dinheiro'&&sale.change>0?' · troco '+money(sale.change):''),'ok')}
+$('finalizeBtn').onclick=openPay;$('payCancel').onclick=closePay;$('payOk').onclick=confirmPay;
+
+/* ---------- caixa ---------- */
+function figs(){const z={cash:0,pix:0,card:0,exp:0,expected:0,count:0,total:0};if(!session)return z;
+ const sum=m=>sales.filter(x=>x.method===m).reduce((a,x)=>a+x.total,0);
+ const cash=sum('Dinheiro'),pix=sum('Pix'),card=sum('Cartão'),exp=expenses.reduce((a,x)=>a+x.amount,0);
+ return{cash,pix,card,exp,expected:cash-exp,count:sales.length,total:cash+pix+card}}
+const dt=d=>new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+function renderCash(){const s=session,f=figs();
+ $('cashStatus').innerHTML=`<i class="dot${s?' on':''}"></i>${s?'Caixa aberto <small>Operador</small> <b>'+esc(s.operator||'')+'</b>':'Caixa fechado'}`;
+ 
+ $('dPix').textContent=money(f.pix);$('dCard').textContent=money(f.card);
+ $('reprintCard').style.display=lastClose?'':'none';
+ const om=$('openModal');if(!s&&ready&&!om.classList.contains('show')){$('opName').value=L.op||'';$('opAmount').value='85,00';om.classList.add('show');setTimeout(()=>{const n=$('opName');n.focus();n.select()},50)}else if(s)om.classList.remove('show');
+ $('openCard').style.display='none';$('closeCard').style.display=s?'':'none';$('expenseCard').style.display=s?'':'none';
+ $('dBal').textContent=money(f.expected);$('dCash').textContent=money(f.cash);$('dExp').textContent=money(f.exp);}
+function doOpen(){if(session)return;const name=$('opName').value.trim(),opening=num($('opAmount').value);
+ if(!name)return toast('Informe o nome de quem vai abrir o caixa','err');
+ L.op=name;session={id:uid(),operator:name,openedAt:new Date().toISOString(),opening};sales=[];expenses=[];
+ queue('sync_open',{p_id:session.id,p_operator:name,p_opening:opening,p_at:session.openedAt});
+ persist();renderAll();toast('Caixa aberto · '+name,'ok');trySync()}
+$('opOk').onclick=doOpen;
+$('addExpense').onclick=()=>{if(!session)return;const d=$('expenseDesc').value.trim(),a=num($('expenseAmount').value);
+ if(!d||a<=0)return toast('Informe descrição e valor','err');
+ const e={id:uid(),date:new Date().toISOString(),description:d,amount:a};expenses.unshift(e);
+ queue('sync_expense',{p_id:e.id,p_session:session.id,p_description:d,p_amount:a,p_at:e.date});
+ $('expenseDesc').value='';$('expenseAmount').value='';persist();renderAll();toast('Saída registrada','ok');trySync()};
+$('closeDrawer').onclick=()=>{if(!session)return;const raw=$('countedAmount').value.trim(),counted=num(raw);
+ if(raw===''||counted<0)return toast('Informe o dinheiro contado','err');
+ const f=figs(),ss=session,c={operator:ss.operator,closedAt:new Date().toISOString(),expected:f.expected,cash:f.cash,opening:ss.opening,pix:f.pix,card:f.card,diff:Math.round((counted-f.expected)*100)/100};
+ queue('sync_close',{p_session:ss.id,p_counted:counted,p_at:c.closedAt});
+ lastClose=c;session=null;sales=[];expenses=[];$('countedAmount').value='';persist();renderAll();toast('Caixa fechado','ok');prtPrint(closingReceipt(c),true);trySync()};
+['countedAmount','opAmount'].forEach(id=>$(id).addEventListener('blur',()=>{const r=$(id).value.trim();if(r!=='')$(id).value=num(r).toFixed(2).replace('.',',')}));
+$('reprintClose').onclick=()=>{if(lastClose)prtPrint(closingReceipt(lastClose),true)};
+/* ---------- vendas do turno ---------- */
+function renderSales(){$('salesCount').textContent=sales.length;$('salesRevenue').textContent=money(sales.reduce((a,x)=>a+x.total,0));}
+function reprint(id){const s=sales.find(x=>x.id===id);if(s)printSale(s,true)}
+/* ---------- estoque (só entrada) ---------- */
+let stPend=null;
+function renderStock(){const sel=$('stP'),cur=sel.value,ctl=products.filter(p=>!unl(p));
+ sel.innerHTML=ctl.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if(cur&&ctl.some(p=>p.id===cur))sel.value=cur;
+ const w=$('stW');if(!w.value&&document.activeElement!==w)w.value=L.rcv||(session&&session.operator)||L.op||'';
+ $('stList').innerHTML=products.map(p=>`<div class="row"><div class="grow"><b>${esc(p.name)}</b></div><b class="${isLow(p)?'low':''}">${unl(p)?'Ilimitado':p.stock+' un.'}</b></div>`).join('')||'<div class="empty">Nenhum produto.</div>';
+ const day=new Date().toDateString(),rec=(L.recv||[]).filter(r=>new Date(r.date).toDateString()===day),by={};
+ rec.forEach(r=>{by[r.operator]=(by[r.operator]||0)+r.qty});
+ $('stRec').innerHTML=rec.length?`<div class="stats"><div class="stat"><small>Total recebido</small><strong>${rec.reduce((a,r)=>a+r.qty,0)} un.</strong></div>${Object.entries(by).map(([o,n])=>`<div class="stat"><small>${esc(o)}</small><strong>${n} un.</strong></div>`).join('')}</div>`+rec.slice(0,15).map(r=>`<div class="row"><div class="grow"><b>${r.qty} × ${esc(r.name)}</b><small>${new Date(r.date).toLocaleTimeString('pt-BR',{timeStyle:'short'})} · ${esc(r.operator)}</small></div></div>`).join(''):'<div class="empty">Nada recebido hoje.</div>'}
+function askStock(){const id=$('stP').value,q=Math.floor(num($('stQ').value)),p=products.find(x=>x.id===id),who=$('stW').value.trim();
+ if(!p)return toast('Escolha um produto','err');if(!who)return toast('Informe quem está recebendo','err');if(q<1)return toast('Informe a quantidade','err');
+ stPend={p,q,who};
+ $('stmBody').innerHTML=`<h2>Confirmar entrada</h2><div class="stm"><b class="stm-q">+${q}</b><span class="stm-n">${esc(p.name)}</span><small>Recebido por <b>${esc(who)}</b><br>Estoque: ${p.stock} → ${p.stock+q}</small></div><div class="acts"><button class="btn" id="stmNo">Voltar <kbd>Apagar</kbd></button><button class="btn primary" id="stmOk">Confirmar <kbd>Enter</kbd></button></div>`;
+ $('stmNo').onclick=closeStm;$('stmOk').onclick=doStock;$('stModal').classList.add('show')}
+function closeStm(){stPend=null;$('stModal').classList.remove('show')}
+function doStock(){if(!stPend)return;const{p,q,who}=stPend;stPend=null;
+ p.stock+=q;L.rcv=who;
+ queue('stock_move',{p_product:p.id,p_type:'entrada',p_qty:q,p_operator:who});
+ const lim=Date.now()-3*864e5;L.recv=[{date:new Date().toISOString(),operator:who,name:p.name,qty:q},...(L.recv||[])].filter(r=>new Date(r.date)>lim);
+ $('stQ').value='';persist();renderAll();trySync();
+ $('stmBody').innerHTML=`<div class="okv"><svg viewBox="0 0 92 92"><circle cx="46" cy="46" r="40"/><path d="M28 47l12 12 25-27"/></svg><b>+${q} ${esc(p.name)}</b><small>Estoque: ${p.stock}</small></div>`;
+ setTimeout(()=>$('stModal').classList.remove('show'),1100)}
+$('stAdd').onclick=askStock;
+$('stQ').oninput=e=>{e.target.value=e.target.value.replace(/\D/g,'')};
+$('stQ').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();askStock()}};
+function renderAll(){renderProducts();renderCart();renderCash();renderSales();renderStock()}
+/* ---------- teclado ---------- */
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(b)b.blur()});
+document.addEventListener('keydown',e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ const k=e.key;
+ if($('stModal').classList.contains('show')){if(k==='Enter'){e.preventDefault();if(!e.repeat)doStock()}else if(k==='Escape'||k==='Backspace'){e.preventDefault();closeStm()}return}
+ if($('openModal').classList.contains('show')){if(k==='Enter'){e.preventDefault();doOpen()}return}
+ if(payOpen){const l=k.toLowerCase();
+  if(k==='Escape'||(k==='Backspace'&&!($('recv')&&$('recv').value))){e.preventDefault();closePay()}
+  else if(k==='Enter'||k===' '){e.preventDefault();if(!e.repeat)confirmPay()}
+  else{const pm=l==='k'?'Dinheiro':l==='l'?'Cartão':(l==='ç'||e.code==='Semicolon')?'Pix':null;if(pm){e.preventDefault();method=pm;renderPay()}}
+  return}
+ const t=e.target,typing=/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)&&t.id!=='qty';
+ const lk=k.toLowerCase();
+ if(KEYRE.test(lk)&&!e.ctrlKey&&!e.metaKey&&!e.altKey){if(typing)return;e.preventDefault();if(e.repeat)return;
+  const p=products.find(x=>x.shortcut===lk);
+  if(!p){toast('Nenhum produto na tecla '+lk.toUpperCase()+'. Configure na aba Produtos.','err');return}
+  if(!screenIs('pedido'))switchScreen('pedido');
+  startEntry(p);return}
+ if(entry){
+  if(k==='Enter'){e.preventDefault();if(!e.repeat)confirmEntry()}
+  else if(k==='Escape'||(k==='Backspace'&&!($('qty')&&$('qty').value))){e.preventDefault();endEntry()}
+  else if(k===' ')e.preventDefault();
+  else if(/^\d$/.test(k)&&document.activeElement!==$('qty'))$('qty').focus();
+  return}
+ if(k===' '&&screenIs('pedido')&&!typing){e.preventDefault();if(!e.repeat)openPay()}
+});
+/* ---------- impressora bluetooth (ESC/POS, 58mm) ---------- */
+const PRT_SERVICES=['000018f0-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','49535343-fe7d-4ae5-8fa9-9fafd205e455','0000ae30-0000-1000-8000-00805f9b34fb','0000fee7-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','0000fff0-0000-1000-8000-00805f9b34fb'];
+const PW=32,ENC=new TextEncoder(),wait=ms=>new Promise(r=>setTimeout(r,ms));
+let prt={dev:null,ch:null,busy:false};
+const prtOn=()=>!!(prt.dev&&prt.dev.gatt&&prt.dev.gatt.connected&&prt.ch);
+function prtUI(){$('prtConn').innerHTML=`<i class="dot${prtOn()?' on':''}"></i>${prtOn()?esc(prt.dev.name||'Impressora'):'Conectar impressora'}`}
+async function prtOpen(dev){
+ const srv=await dev.gatt.connect();let ch=null;
+ for(const s of await srv.getPrimaryServices()){
+  for(const c of await s.getCharacteristics()){if(c.properties.writeWithoutResponse||c.properties.write){ch=c;break}}
+  if(ch)break}
+ if(!ch)throw new Error('esta impressora não aceita Bluetooth pelo navegador');
+ prt.dev=dev;prt.ch=ch;dev.ongattserverdisconnected=()=>{prt.ch=null;prtUI()};prtUI()}
+async function prtConnect(ask){
+ if(!navigator.bluetooth)throw new Error('use o Chrome no Android');
+ let dev=prt.dev;
+ if(!dev&&navigator.bluetooth.getDevices){try{const l=await navigator.bluetooth.getDevices();dev=l.find(d=>/MPT/i.test(d.name||''))||l[0]}catch(e){}}
+ if(!dev&&ask)dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:PRT_SERVICES});
+ if(!dev)throw new Error('impressora não conectada');
+ await prtOpen(dev)}
+const asc=s=>String(s).replace(/ /g,' ').replace(/×/g,'x').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7e]/g,'?');
+function lr(a,b){a=asc(a);b=asc(b);a=a.slice(0,Math.max(0,PW-b.length-1));return a+' '.repeat(PW-a.length-b.length)+b}
+function receipt(s){const o=[],sh=data.shop,t=x=>o.push(...ENC.encode(asc(x)+'\n')),b=(...x)=>o.push(...x),L='-'.repeat(PW);
+ b(0x1b,0x40,0x1b,0x61,1,0x1b,0x45,1,0x1d,0x21,0);t(sh.name);b(0x1b,0x45,0);if(sh.line)t(sh.line);
+ b(0x1b,0x4d,1);t(new Date(s.date).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}));b(0x1b,0x4d,0);
+ b(0x1b,0x61,0);t(L);
+ s.items.forEach(x=>{b(0x1b,0x45,1);o.push(...ENC.encode(asc(x.name).slice(0,PW-12)+'  '));b(0x1b,0x45,0,0x1b,0x4d,1);o.push(...ENC.encode('QTD '));b(0x1b,0x4d,0,0x1b,0x45,1);o.push(...ENC.encode(x.qty+'\n'));b(0x1b,0x45,0)});
+ t(L);b(0x1b,0x45,1);t(lr('TOTAL',money(s.total)));if(s.method==='Dinheiro'&&s.change>0)t(lr('TROCO',money(s.change)));b(0x1b,0x45,0);
+ t(L);b(0x1b,0x61,1,0x1b,0x45,1);t('PAGO');b(0x1b,0x45,0);t(sh.footer);b(0x1b,0x64,4);
+ return new Uint8Array(o)}
+async function prtSend(bytes){const c=prt.ch;
+ for(let i=0;i<bytes.length;i+=100){const p=bytes.slice(i,i+100);
+  if(c.properties.writeWithoutResponse)await c.writeValueWithoutResponse(p);else await c.writeValue(p);await wait(25)}}
+async function prtPrint(bytes,ask){
+ if(prt.busy)return false;prt.busy=true;
+ try{
+  for(let n=0;n<2;n++){
+   try{if(!prtOn())await prtConnect(ask&&n===0);await prtSend(bytes);return true}
+   catch(e){prt.ch=null;if(n===1||e.name==='NotFoundError')throw e;await wait(300)}}
+ }catch(e){
+  toast(e.name==='NotFoundError'?'Nenhuma impressora escolhida':'Impressão falhou: '+(e.message||e)+' · toque em "Impressora"','err');return false}
+ finally{prt.busy=false;prtUI()}}
+const printSale=(sale,ask)=>prtPrint(receipt(sale),ask);
+function closingReceipt(c){const o=[],sh=data.shop,t=x=>o.push(...ENC.encode(asc(x)+'\n')),b=(...x)=>o.push(...x),L='-'.repeat(PW);
+ const dt=d=>new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+ b(0x1b,0x40,0x1b,0x61,1,0x1b,0x45,1);t(sh.name);b(0x1b,0x45,0);
+ b(0x1b,0x4d,1);t('FECHAMENTO DE CAIXA - '+dt(c.closedAt));b(0x1b,0x4d,0);
+ b(0x1b,0x61,0);t(L);
+ b(0x1b,0x45,1);t('Operador: '+c.operator);t(lr('ABERTURA DE CAIXA',money(c.opening)));t(L);
+ t(lr('DINHEIRO',money(c.cash)));t(lr('PIX',money(c.pix)));t(lr('CARTAO',money(c.card)));b(0x1b,0x45,0);
+ t(L);
+ if(c.diff<0){b(0x1b,0x61,1,0x1b,0x45,1);t('QUEBRA DE CAIXA');b(0x1b,0x61,0);t(lr('Faltou',money(-c.diff)));b(0x1b,0x45,0);t(L)}
+ b(0x1b,0x64,4);
+ return new Uint8Array(o)}
+$('prtConn').onclick=async()=>{try{prt.dev=null;prt.ch=null;await prtConnect(true);toast('Impressora conectada: '+(prt.dev.name||''),'ok')}catch(e){toast(e.name==='NotFoundError'?'Nenhuma impressora escolhida':'Não conectou: '+(e.message||e),'err')}};
+prtUI();if(navigator.bluetooth&&navigator.bluetooth.getDevices)prtConnect(false).catch(()=>{});
+
+/* ---------- tela cheia + instalação ---------- */
+const isApp=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const inFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+function goFs(){const el=document.documentElement,f=el.requestFullscreen||el.webkitRequestFullscreen;if(f&&!inFs())try{const r=f.call(el,{navigationUI:'hide'});if(r&&r.catch)r.catch(()=>{})}catch(e){}}
+function leaveFs(){const f=document.exitFullscreen||document.webkitExitFullscreen;if(f)f.call(document)}
+$('fsBtn').onclick=()=>inFs()?leaveFs():goFs();
+if(isApp())$('fsBtn').style.display='none';
+else{const once=()=>{goFs();['pointerdown','keydown'].forEach(t=>removeEventListener(t,once,true))};['pointerdown','keydown'].forEach(t=>addEventListener(t,once,true))}
+if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+
+$('failClear').onclick=()=>{const b=$('failClear');if(!armed){armed=true;b.textContent='Toque de novo para descartar '+L.failed.length+' envio(s)';setTimeout(()=>{armed=false;b.textContent='Descartar envios com erro'},4000);return}
+ armed=false;b.textContent='Descartar envios com erro';L.failed=[];persist();netUI();toast('Envios com erro descartados','ok')};
+$('netStatus').onclick=()=>{if(L.failed.length){L.outbox=[...L.failed.map(({fn,args})=>({fn,args})),...L.outbox];L.failed=[];persist()}toast(navigator.onLine?'Sincronizando…':'Sem internet — tudo fica salvo no aparelho');trySync()};
+addEventListener('online',()=>{netUI();trySync()});addEventListener('offline',netUI);
+renderEntry();renderAll();netUI();
+ready=true;renderAll();trySync();setInterval(trySync,20000);
+</script>
+</body>
+</html>
