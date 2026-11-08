@@ -226,21 +226,22 @@ normKeys();
 let payTouched=false,cart=[],method='Dinheiro',entry=null,lastSale=null,payOpen=false,openedAt=0,ready=false,syncing=false;
 const persist=()=>{Object.assign(L,{products,session,sales,expenses,lastClose,shop:data.shop});try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}};
 const totalCart=()=>cart.reduce((s,x)=>s+x.price*x.qty,0);
-/* acréscimo do cartão: R$ 1,00 por produto (unidade) pago no cartão */
+/* acréscimo do cartão: R$ 1,00 por COMPRA paga no cartão (uma vez só, não por produto). Em pagamento dividido, vale se uma parte for no cartão */
 const FEE_CARD=1;
 const r2=v=>Math.round(v*100)/100;
 const cartUnits=()=>cart.reduce((a,x)=>a+x.qty,0);
-const cartItems=(add=0)=>cart.map(x=>({id:x.id,name:x.name,price:r2(x.price+add),qty:x.qty}));
+const cartItems=()=>cart.map(x=>({id:x.id,name:x.name,price:x.price,qty:x.qty}));
+const cartItemsFee=fee=>{const it=cartItems();if(!(fee>0)||!it.length)return it;const f=it[0];return f.qty>1?[{...f,qty:f.qty-1},{...f,price:r2(f.price+fee),qty:1},...it.slice(1)]:[{...f,price:r2(f.price+fee)},...it.slice(1)]};
 const payRows=x=>{const pp=payParts(x),k=Object.keys(pp),nm=n=>n==='Cartão'?'CARTÃO':String(n).toUpperCase();
  if(k.length>1)return k.map(n=>[nm(n),pp[n]]);
  return [[nm(k[0]),k[0]==='Dinheiro'&&x.received>0?x.received:x.total]]};
 const grp=items=>{const o={};items.forEach(x=>{(o[x.name]??={name:x.name,qty:0}).qty+=x.qty});return Object.values(o)};
-/* pagamento dividido: o dinheiro paga os produtos mais baratos (sem acréscimo), o resto vai no Pix (sem acréscimo) ou no cartão (+R$ 1 por produto) */
+/* pagamento dividido: o dinheiro paga os produtos mais baratos (sem acréscimo), o resto vai no Pix (sem acréscimo) ou no cartão (+R$ 1 por compra) */
 function splitPlan(m2,X){const fee=m2==='Cartão'?FEE_CARD:0,U=[];cart.forEach(x=>{for(let i=0;i<x.qty;i++)U.push(x)});U.sort((a,b)=>a.price-b.price);
  let acc=0,k=0;while(k<U.length&&acc+U[k].price<=X+0.005){acc+=U[k].price;k++}
- const g={};U.forEach((u,i)=>{const p=i<k?u.price:r2(u.price+fee),key=u.id+'|'+p;(g[key]??={id:u.id,name:u.name,price:p,qty:0}).qty++});
+ const g={};U.forEach((u,i)=>{const p=i===k?r2(u.price+fee):u.price,key=u.id+'|'+p;(g[key]??={id:u.id,name:u.name,price:p,qty:0}).qty++});
  const items=Object.values(g),total=r2(items.reduce((a,x)=>a+x.price*x.qty,0));
- return{items,total,rest:r2(total-X),fee:r2((U.length-k)*fee)}}
+ return{items,total,rest:r2(total-X),fee:k<U.length?fee:0}}
 const screenIs=id=>$(id).classList.contains('active');
 /* ---- fila de envio: tudo que acontece offline vai pra fila e sobe quando tiver rede ---- */
 function queue(fn,args){L.outbox.push({fn,args})}
@@ -318,8 +319,8 @@ $('printBtn').onclick=async()=>{if(lastSale&&!cart.length&&navigator.bluetooth){
 function openPay(){if(!cart.length){toast('Adicione itens ao pedido','err');return}
  if(entry)endEntry();payOpen=true;method='Dinheiro';openedAt=Date.now();renderPay();$('payModal').classList.add('show')}
 function closePay(){payOpen=false;$('payModal').classList.remove('show')}
-function renderPay(){const t=totalCart(),fee=method==='Cartão'?r2(cartUnits()*FEE_CARD):0;
- $('payBody').innerHTML=`<div class="paytot"><small>Total a receber</small><strong>${money(t+fee)}</strong>${fee?`<small>inclui ${money(fee)} de acréscimo do cartão (${money(FEE_CARD)} por produto)</small>`:''}</div><div class="seg">${[['Dinheiro','K'],['Cartão','L'],['Pix','Ç']].map(([m,k])=>`<button data-m="${m}" class="${m===method?'on':''}">${m}<kbd>${k}</kbd></button>`).join('')}</div>${method==='Dinheiro'?`<label for="recv">Valor recebido</label><input id="recv" inputmode="decimal" autocomplete="off" value="${t.toFixed(2).replace('.',',')}"><div class="chg"><span>Troco</span><b id="chg"></b></div><div id="split"></div>`:''}`;
+function renderPay(){const t=totalCart(),fee=method==='Cartão'?FEE_CARD:0;
+ $('payBody').innerHTML=`<div class="paytot"><small>Total a receber</small><strong>${money(t+fee)}</strong>${fee?`<small>inclui ${money(fee)} de acréscimo do cartão (por compra)</small>`:''}</div><div class="seg">${[['Dinheiro','K'],['Cartão','L'],['Pix','Ç']].map(([m,k])=>`<button data-m="${m}" class="${m===method?'on':''}">${m}<kbd>${k}</kbd></button>`).join('')}</div>${method==='Dinheiro'?`<label for="recv">Valor recebido</label><input id="recv" inputmode="decimal" autocomplete="off" value="${t.toFixed(2).replace('.',',')}"><div class="chg"><span>Troco</span><b id="chg"></b></div><div id="split"></div>`:''}`;
  document.querySelectorAll('#payBody .seg button').forEach(b=>b.onclick=()=>{method=b.dataset.m;renderPay()});
  const r=$('recv');if(r){payTouched=false;let cl=false;r.oninput=()=>{cl=true;updChange()};
   r.addEventListener('pointerdown',()=>{if(cl)return;cl=true;payTouched=true;setTimeout(()=>{r.value='';updChange()},0)});
@@ -328,10 +329,10 @@ function updChange(){const r=$('recv');if(!r)return;const c=num(r.value)-totalCa
  b.textContent=c>=-0.005?money(Math.max(0,c)):'faltam '+money(-c);b.className=c<-0.005?'bad':'';
  const rv=num(r.value),sp=$('split');
  if(sp){if(rv>0.005&&c<-0.005){const pp=splitPlan('Pix',rv),pc=splitPlan('Cartão',rv);
-  sp.innerHTML=`<div class="splt"><small>Falta <b>${money(-c)}</b>. Pagar o restante no:</small><div><button class="btn" onclick="splitPay('Pix')">Pix ${money(pp.rest)} <kbd>Ç</kbd></button><button class="btn" onclick="splitPay('Cartão')">Cartão ${money(pc.rest)} <kbd>L</kbd></button></div><small style="margin:8px 0 0">No cartão entra ${money(FEE_CARD)} a mais por produto (+${money(pc.fee)}).</small></div>`}else sp.innerHTML=''}}
+  sp.innerHTML=`<div class="splt"><small>Falta <b>${money(-c)}</b>. Pagar o restante no:</small><div><button class="btn" onclick="splitPay('Pix')">Pix ${money(pp.rest)} <kbd>Ç</kbd></button><button class="btn" onclick="splitPay('Cartão')">Cartão ${money(pc.rest)} <kbd>L</kbd></button></div><small style="margin:8px 0 0">No cartão entra ${money(FEE_CARD)} a mais na compra (acréscimo único).</small></div>`}else sp.innerHTML=''}}
 function confirmPay(){if(!payOpen||Date.now()-openedAt<250)return;
  const base=totalCart();let total=base,received=base,items=null;
- if(method==='Cartão'){items=cartItems(FEE_CARD);total=r2(base+cartUnits()*FEE_CARD);received=total}
+ if(method==='Cartão'){items=cartItemsFee(FEE_CARD);total=r2(base+FEE_CARD);received=total}
  else if(method==='Dinheiro'){received=num($('recv').value);if(received<base-0.005){toast(received>0.005?'Faltam '+money(base-received)+' · escolha Pix ou Cartão para o restante':'Digite o valor recebido','err');return}}
  finishSale(total,method,received,items)}
 function splitPay(m2){if(!payOpen)return;const base=totalCart(),X=r2(num($('recv').value));if(!(X>0.005&&X<base-0.005))return;
