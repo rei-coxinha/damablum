@@ -296,7 +296,7 @@ function renderCart(){
 /* ---------- nota ---------- */
 function paperHTML(m){const s=data.shop;
  const rows=(m.edit?cart.map(x=>`<div class="it ed"><span class="nm">${esc(x.name)}</span><button type="button" onclick="chg('${x.id}',-1)" aria-label="Diminuir">−</button><b>${x.qty}</b><button type="button" onclick="chg('${x.id}',1)" aria-label="Aumentar">+</button></div>`).join(''):grp(m.items).map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join(''))||'<div class="none">Aguardando itens</div>';
- return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr><div class="its">${rows}</div><hr>${m.pay&&m.pay.fee>0?`<div class="rl"><span>SUBTOTAL</span><span>${money(m.total-m.pay.fee)}</span></div><div class="rl"><span>ACRÉSCIMO CARTÃO</span><span>${money(m.pay.fee)}</span></div>`:''}<div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div>${m.pay&&m.pay.sale?`<hr>`+payRows(m.pay.sale).map(r=>`<div class="rl"><span>${r[0]}</span><span>${money(r[1])}</span></div>`).join(''):''}${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl tot"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}<hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
+ return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr><div class="its">${rows}</div><hr>${m.pay&&m.pay.fee>0?`<div class="rl"><span>SUBTOTAL</span><span>${money(m.total-m.pay.fee)}</span></div><div class="rl"><span>ACRÉSCIMO CARTÃO</span><span>${money(m.pay.fee)}</span></div>`:''}${m.pay&&m.pay.sale?payRows(m.pay.sale).map(r=>`<div class="rl"><span>${r[0]}</span><span>${money(r[1])}</span></div>`).join(''):''}${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}${m.pay?'<hr>':''}<div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div><hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
 function renderPaper(){let m;
  if(cart.length)m={items:cart,total:totalCart(),no:0,date:new Date(),edit:true};
  else if(lastSale)m={items:lastSale.items,total:lastSale.total,no:lastSale.no||lastSale.id,date:new Date(lastSale.date),pay:{method:lastSale.method,received:lastSale.received,change:lastSale.change,fee:Number(lastSale.fee||0),sale:lastSale}};
@@ -482,9 +482,9 @@ function receipt(s){const o=[],sh=data.shop,t=x=>o.push(...ENC.encode(asc(x)+'\n
  b(0x1b,0x61,0);t(L);
  grp(s.items).forEach(x=>{b(0x1b,0x45,1);o.push(...ENC.encode(asc(x.name).slice(0,PW-12)+'  '));b(0x1b,0x45,0,0x1b,0x4d,1);o.push(...ENC.encode('QTD '));b(0x1b,0x4d,0,0x1b,0x45,1);o.push(...ENC.encode(x.qty+'\n'));b(0x1b,0x45,0)});
  t(L);const fe=Number(s.fee||0);if(fe>0){t(lr('SUBTOTAL',money(s.total-fe)));t(lr('ACRESCIMO CARTAO',money(fe)))}
- b(0x1b,0x45,1);t(lr('TOTAL',money(s.total)));b(0x1b,0x45,0);
- t(L);payRows(s).forEach(r=>t(lr(r[0],money(r[1]))));
- if(s.method==='Dinheiro'&&s.change>0){b(0x1b,0x45,1);t(lr('TROCO',money(s.change)));b(0x1b,0x45,0)}
+ payRows(s).forEach(r=>t(lr(r[0],money(r[1]))));
+ if(s.method==='Dinheiro'&&s.change>0)t(lr('TROCO',money(s.change)));
+ t(L);b(0x1b,0x45,1);t(lr('TOTAL',money(s.total)));b(0x1b,0x45,0);
  t(L);b(0x1b,0x61,1,0x1b,0x45,1);t('PAGO');b(0x1b,0x45,0);t(sh.footer);b(0x1b,0x64,4);
  return new Uint8Array(o)}
 async function prtSend(bytes){const c=prt.ch;
