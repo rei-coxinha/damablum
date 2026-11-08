@@ -89,6 +89,7 @@ nav button:hover{color:#fff}nav button.active{background:var(--gold);color:#0d28
 .pf{text-align:center;padding:4px 0 16px;display:flex;flex-direction:column;gap:3px;font-size:11px;color:#807d6e}.pf b{color:#2b2a26;font-size:13px;letter-spacing:1px}
 .right #printBtn{margin:22px auto 0;display:flex;width:100%;max-width:320px}
 .paybox{position:sticky;bottom:0;max-width:320px;margin:14px auto 4px;padding:14px 16px;box-shadow:0 -6px 18px -10px #0d281d55,0 8px 24px -14px #0d281d33}
+.paybox .entry{min-height:0;margin-bottom:10px;padding:6px 10px;gap:6px;border-radius:12px;font-size:12px;flex-wrap:wrap}.paybox .entry .en-name{font-size:12px;gap:6px}.paybox .entry .en-x{font-size:13px}.paybox .entry input{width:48px;font-size:17px;border-bottom-width:2px}.paybox .entry .en-hint{display:none}.paybox .entry kbd{font-size:10px;padding:1px 5px}
 .paybox .foot{flex-direction:column;align-items:stretch;gap:12px;padding-top:0}.paybox .foot strong{font-size:40px}.paybox .foot .btn{width:100%;padding:16px 20px}
 /* formulários */
 label,.lbl{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:0 0 6px}
@@ -141,12 +142,11 @@ input:focus,select:focus{border-color:var(--pu)}
 
 <section id="pedido" class="screen active"><div class="pdv">
  <div class="left">
-  <div class="entry" id="entry"></div>
   <div class="tiles" id="tiles"></div>
   <div class="card cart"><div id="cartLines"></div></div>
  </div>
  <aside class="right"><div class="paper" id="paper"></div><button class="btn" id="printBtn">Imprimir nota</button>
-  <div class="card paybox"><div class="foot"><div><small>Total</small><strong id="cartTotal">R$ 0,00</strong></div><button class="btn primary" id="finalizeBtn" disabled>Finalizar <kbd>Espaço</kbd></button></div></div>
+  <div class="card paybox"><div class="entry" id="entry"></div><div class="foot"><div><small>Total</small><strong id="cartTotal">R$ 0,00</strong></div><button class="btn primary" id="finalizeBtn" disabled>Finalizar <kbd>Espaço</kbd></button></div></div>
  </aside>
 </div></section>
 
