@@ -231,6 +231,9 @@ const FEE_CARD=1;
 const r2=v=>Math.round(v*100)/100;
 const cartUnits=()=>cart.reduce((a,x)=>a+x.qty,0);
 const cartItems=(add=0)=>cart.map(x=>({id:x.id,name:x.name,price:r2(x.price+add),qty:x.qty}));
+const payRows=x=>{const pp=payParts(x),k=Object.keys(pp),nm=n=>n==='Cartão'?'CARTÃO':String(n).toUpperCase();
+ if(k.length>1)return k.map(n=>[nm(n),pp[n]]);
+ return [[nm(k[0]),k[0]==='Dinheiro'&&x.received>0?x.received:x.total]]};
 const grp=items=>{const o={};items.forEach(x=>{(o[x.name]??={name:x.name,qty:0}).qty+=x.qty});return Object.values(o)};
 /* pagamento dividido: o dinheiro paga os produtos mais baratos (sem acréscimo), o resto vai no Pix (sem acréscimo) ou no cartão (+R$ 1 por produto) */
 function splitPlan(m2,X){const fee=m2==='Cartão'?FEE_CARD:0,U=[];cart.forEach(x=>{for(let i=0;i<x.qty;i++)U.push(x)});U.sort((a,b)=>a.price-b.price);
@@ -293,10 +296,10 @@ function renderCart(){
 /* ---------- nota ---------- */
 function paperHTML(m){const s=data.shop;
  const rows=(m.edit?cart.map(x=>`<div class="it ed"><span class="nm">${esc(x.name)}</span><button type="button" onclick="chg('${x.id}',-1)" aria-label="Diminuir">−</button><b>${x.qty}</b><button type="button" onclick="chg('${x.id}',1)" aria-label="Aumentar">+</button></div>`).join(''):grp(m.items).map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join(''))||'<div class="none">Aguardando itens</div>';
- return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr><div class="its">${rows}</div><hr><div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div>${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl tot"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}<hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
+ return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr><div class="its">${rows}</div><hr>${m.pay&&m.pay.fee>0?`<div class="rl"><span>SUBTOTAL</span><span>${money(m.total-m.pay.fee)}</span></div><div class="rl"><span>ACRÉSCIMO CARTÃO</span><span>${money(m.pay.fee)}</span></div>`:''}<div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div>${m.pay&&m.pay.sale?`<hr>`+payRows(m.pay.sale).map(r=>`<div class="rl"><span>${r[0]}</span><span>${money(r[1])}</span></div>`).join(''):''}${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl tot"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}<hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
 function renderPaper(){let m;
  if(cart.length)m={items:cart,total:totalCart(),no:0,date:new Date(),edit:true};
- else if(lastSale)m={items:lastSale.items,total:lastSale.total,no:lastSale.no||lastSale.id,date:new Date(lastSale.date),pay:{method:lastSale.method,received:lastSale.received,change:lastSale.change}};
+ else if(lastSale)m={items:lastSale.items,total:lastSale.total,no:lastSale.no||lastSale.id,date:new Date(lastSale.date),pay:{method:lastSale.method,received:lastSale.received,change:lastSale.change,fee:Number(lastSale.fee||0),sale:lastSale}};
  else m={items:[],total:0,no:0,date:new Date()};
  $('paper').innerHTML=paperHTML(m)}
 function feed(){const p=$('paper');p.classList.remove('out');void p.offsetWidth;p.classList.add('out')}
@@ -327,7 +330,7 @@ function splitPay(m2){if(!payOpen)return;const base=totalCart(),X=r2(num($('recv
  finishSale(p.total,'Dinheiro '+X.toFixed(2)+' + '+m2+' '+p.rest.toFixed(2),p.total,p.items)}
 function finishSale(total,method,received,items){
  if(!session){toast('Abra o caixa antes de vender','err');return}
- const sale={id:uid(),no:++L.no,date:new Date().toISOString(),items:items||cartItems(),total,method,received,change:Math.max(0,r2(received-total))};
+ const sale={id:uid(),no:++L.no,date:new Date().toISOString(),items:items||cartItems(),total,method,received,change:Math.max(0,r2(received-total)),fee:Math.max(0,r2(total-totalCart()))};
  sale.items.forEach(x=>{const p=products.find(a=>a.id===x.id);if(p&&!unl(p))p.stock=Math.max(0,p.stock-x.qty)});
  sales.unshift(sale);
  queue('sync_sale',{p_id:sale.id,p_no:sale.no,p_session:session.id,p_method:method,p_received:received,p_items:sale.items,p_at:sale.date});
@@ -478,7 +481,10 @@ function receipt(s){const o=[],sh=data.shop,t=x=>o.push(...ENC.encode(asc(x)+'\n
  b(0x1b,0x4d,1);t(new Date(s.date).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}));b(0x1b,0x4d,0);
  b(0x1b,0x61,0);t(L);
  grp(s.items).forEach(x=>{b(0x1b,0x45,1);o.push(...ENC.encode(asc(x.name).slice(0,PW-12)+'  '));b(0x1b,0x45,0,0x1b,0x4d,1);o.push(...ENC.encode('QTD '));b(0x1b,0x4d,0,0x1b,0x45,1);o.push(...ENC.encode(x.qty+'\n'));b(0x1b,0x45,0)});
- t(L);b(0x1b,0x45,1);t(lr('TOTAL',money(s.total)));if(s.method==='Dinheiro'&&s.change>0)t(lr('TROCO',money(s.change)));b(0x1b,0x45,0);
+ t(L);const fe=Number(s.fee||0);if(fe>0){t(lr('SUBTOTAL',money(s.total-fe)));t(lr('ACRESCIMO CARTAO',money(fe)))}
+ b(0x1b,0x45,1);t(lr('TOTAL',money(s.total)));b(0x1b,0x45,0);
+ t(L);payRows(s).forEach(r=>t(lr(r[0],money(r[1]))));
+ if(s.method==='Dinheiro'&&s.change>0){b(0x1b,0x45,1);t(lr('TROCO',money(s.change)));b(0x1b,0x45,0)}
  t(L);b(0x1b,0x61,1,0x1b,0x45,1);t('PAGO');b(0x1b,0x45,0);t(sh.footer);b(0x1b,0x64,4);
  return new Uint8Array(o)}
 async function prtSend(bytes){const c=prt.ch;
