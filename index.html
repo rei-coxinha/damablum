@@ -501,7 +501,10 @@ function leaveFs(){const f=document.exitFullscreen||document.webkitExitFullscree
 $('fsBtn').onclick=()=>inFs()?leaveFs():goFs();
 if(isApp())$('fsBtn').style.display='none';
 else{const once=()=>{goFs();['pointerdown','keydown'].forEach(t=>removeEventListener(t,once,true))};['pointerdown','keydown'].forEach(t=>addEventListener(t,once,true))}
-if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+ const had=!!navigator.serviceWorker.controller;let rl=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had||rl)return;if(typeof payOpen!=='undefined'&&(payOpen||entry||cart.length)){toast('Nova versão pronta · feche e abra o app quando terminar','ok');return}rl=true;location.reload()});
+ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{r.update();setInterval(()=>r.update(),60000)}).catch(()=>{})}
 
 
 $('failClear').onclick=()=>{const b=$('failClear');if(!armed){armed=true;b.textContent='Toque de novo para descartar '+L.failed.length+' envio(s)';setTimeout(()=>{armed=false;b.textContent='Descartar envios com erro'},4000);return}
