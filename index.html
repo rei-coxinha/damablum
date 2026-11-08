@@ -82,7 +82,7 @@ nav button:hover{color:#fff}nav button.active{background:var(--gold);color:#0d28
 .paper.out{animation:feed .35s ease-out}
 @keyframes feed{from{transform:translateY(-22px);opacity:.3}to{transform:none;opacity:1}}
 .ph{text-align:center;display:flex;flex-direction:column;gap:2px;margin-bottom:10px}.ph b{font-size:14px}.ph span{font-size:11px;color:#807d6e}
-.paper .its{max-height:max(130px,calc(100vh - 430px));overflow-y:auto}.it.ed{align-items:center;gap:8px;margin:6px 0}.it.ed .nm{flex:1;min-width:0}.it.ed button{flex:none;width:28px;height:28px;border-radius:9px;background:#e3f1e7;color:var(--pu);font-weight:800;font-size:17px;line-height:1;padding:0}.it.ed b{min-width:20px;text-align:center;font-size:15px}
+.paper .its{max-height:max(130px,calc(100vh - 430px));overflow-y:auto}.it.ed{align-items:center;gap:8px;margin:6px 0}.it.ed .nm{flex:1;min-width:0}.it.ed button{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;flex:none;width:28px;height:28px;border-radius:9px;background:#e3f1e7;color:var(--pu);font-weight:800;font-size:17px;line-height:1;padding:0}.it.ed b{min-width:20px;text-align:center;font-size:15px}
 .paper hr{border:0;border-top:1px dashed #bdb9a8;margin:9px 0}
 .rl,.it{display:flex;justify-content:space-between;gap:10px}.it{margin:4px 0;justify-content:flex-start;align-items:baseline;gap:6px;font-size:13px;font-weight:700}.it i{font-style:normal;font-size:9px;font-weight:600;color:#6b6858}.it b{font-size:13px}.rl.top{font-weight:700}.it small{display:block;color:#8a8776;font-size:11px}
 .tot{font-weight:700;font-size:14px}
@@ -286,16 +286,16 @@ function addToCart(p,q){const l=cart.find(x=>x.id===p.id),have=l?l.qty:0;
  if(!unl(p)&&have+q>p.stock){toast('Estoque insuficiente · disponível: '+(p.stock-have),'err');return false}
  if(l)l.qty+=q;else cart.push({id:p.id,name:p.name,price:Number(p.price),qty:q});
  lastSale=null;renderCart();return true}
-function chg(id,d){const x=cart.find(a=>a.id===id),p=products.find(a=>a.id===id);if(!x||!p)return;
- if(d>0&&!unl(p)&&x.qty>=p.stock){toast('Estoque insuficiente','err');return}
- x.qty+=d;if(x.qty<=0)cart=cart.filter(a=>a.id!==id);lastSale=null;renderCart()}
+function chg(id,d){const x=cart.find(a=>a.id===id),p=products.find(a=>a.id===id);if(!x||!p)return false;
+ if(d>0&&!unl(p)&&x.qty>=p.stock){toast('Estoque insuficiente','err');return false}
+ x.qty+=d;if(x.qty<=0)cart=cart.filter(a=>a.id!==id);lastSale=null;renderCart();return true}
 function rm(id){cart=cart.filter(x=>x.id!==id);renderCart()}
 function renderCart(){
  $('cartTotal').textContent=money(totalCart());$('finalizeBtn').disabled=!cart.length;renderPaper()}
 
 /* ---------- nota ---------- */
 function paperHTML(m){const s=data.shop;
- const rows=(m.edit?cart.map(x=>`<div class="it ed"><span class="nm">${esc(x.name)}</span><button type="button" onclick="chg('${x.id}',-1)" aria-label="Diminuir">−</button><b>${x.qty}</b><button type="button" onclick="chg('${x.id}',1)" aria-label="Aumentar">+</button></div>`).join(''):grp(m.items).map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join(''))||'<div class="none">Aguardando itens</div>';
+ const rows=(m.edit?cart.map(x=>`<div class="it ed"><span class="nm">${esc(x.name)}</span><button type="button" data-id="${x.id}" data-d="-1" aria-label="Diminuir">−</button><b>${x.qty}</b><button type="button" data-id="${x.id}" data-d="1" aria-label="Aumentar">+</button></div>`).join(''):grp(m.items).map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join(''))||'<div class="none">Aguardando itens</div>';
  return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr><div class="its">${rows}</div><hr>${m.pay&&m.pay.fee>0?`<div class="rl"><span>SUBTOTAL</span><span>${money(m.total-m.pay.fee)}</span></div><div class="rl"><span>ACRÉSCIMO CARTÃO</span><span>${money(m.pay.fee)}</span></div>`:''}${m.pay&&m.pay.sale?payRows(m.pay.sale).map(r=>`<div class="rl"><span>${r[0]}</span><span>${money(r[1])}</span></div>`).join(''):''}${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}${m.pay?'<hr>':''}<div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div><hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
 function renderPaper(){let m;
  if(cart.length)m={items:cart,total:totalCart(),no:0,date:new Date(),edit:true};
@@ -303,6 +303,15 @@ function renderPaper(){let m;
  else m={items:[],total:0,no:0,date:new Date()};
  $('paper').innerHTML=paperHTML(m)}
 function feed(){const p=$('paper');p.classList.remove('out');void p.offsetWidth;p.classList.add('out')}
+/* segurar + ou − na nota: depois de um instante, fica contando sozinho (acelera aos poucos) */
+let hold=null;
+const holdStop=()=>{clearTimeout(hold);hold=null};
+function holdStep(id,d,n){if(chg(id,d)===true&&cart.some(a=>a.id===id))hold=setTimeout(()=>holdStep(id,d,n+1),Math.max(45,130-n*7));else holdStop()}
+$('paper').addEventListener('pointerdown',e=>{const b=e.target.closest('button[data-id]');if(!b||(e.pointerType==='mouse'&&e.button!==0))return;e.preventDefault();holdStop();const id=b.dataset.id,d=Number(b.dataset.d);if(chg(id,d)===true&&cart.some(a=>a.id===id))hold=setTimeout(()=>holdStep(id,d,0),380)});
+['pointerup','pointercancel','blur'].forEach(t=>addEventListener(t,holdStop));
+document.addEventListener('visibilitychange',holdStop);
+$('paper').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b&&e.detail===0)chg(b.dataset.id,Number(b.dataset.d))});
+$('paper').addEventListener('contextmenu',e=>{if(e.target.closest('button[data-id]'))e.preventDefault()});
 $('printBtn').onclick=async()=>{if(lastSale&&!cart.length&&navigator.bluetooth){await printSale(lastSale,true);return}window.print()};
 
 /* ---------- pagamento ---------- */
