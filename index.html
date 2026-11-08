@@ -167,7 +167,7 @@ input:focus,select:focus{border-color:var(--pu)}
 
 <section id="estoque" class="screen"><div class="wrap"><h1>Estoque</h1>
  <div class="grid2">
-  <div class="card"><h3>Adicionar ao estoque</h3><label for="stP">Produto</label><select id="stP"></select><label for="stW">Quem está recebendo</label><input id="stW" autocomplete="off" placeholder="Nome de quem recebeu"><label for="stQ">Quantidade que chegou</label><input id="stQ" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="Ex.: 50"><button class="btn primary block" id="stAdd">Adicionar</button><small style="display:block;margin-top:10px">Aqui só entram os salgados. O estoque dos outros produtos é feito pelo administrador.</small></div>
+  <div class="card"><h3>Adicionar ao estoque</h3><label for="stP">Produto</label><select id="stP"></select><label for="stW">Quem está recebendo <small>(opcional)</small></label><input id="stW" autocomplete="off" placeholder="Se vazio, vale o operador do caixa"><label for="stQ">Quantidade que chegou</label><input id="stQ" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="Ex.: 50"><button class="btn primary block" id="stAdd">Adicionar</button><small style="display:block;margin-top:10px">Aqui só entram os salgados. O estoque dos outros produtos é feito pelo administrador.</small></div>
   <div class="card"><h3>Salgados em estoque</h3><div id="stList"></div></div>
  </div>
  <div class="card"><h3>Recebido hoje</h3><div id="stRec"></div></div>
@@ -376,22 +376,22 @@ let stPend=null;
 const isSal=p=>p.category==='salgados'||/salgad/i.test(p.name||'');
 function renderStock(){const sel=$('stP'),cur=sel.value,ctl=products.filter(p=>!unl(p)&&isSal(p));
  sel.innerHTML=ctl.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if(cur&&ctl.some(p=>p.id===cur))sel.value=cur;
- const w=$('stW');if(!w.value&&document.activeElement!==w)w.value=L.rcv||(session&&session.operator)||L.op||'';
+ 
  $('stList').innerHTML=products.filter(isSal).map(p=>`<div class="row"><div class="grow"><b>${esc(p.name)}</b></div><b class="${isLow(p)?'low':''}">${unl(p)?'Ilimitado':p.stock+' un.'}</b></div>`).join('')||'<div class="empty">Nenhum salgado cadastrado.</div>';
  const day=new Date().toDateString(),rec=(L.recv||[]).filter(r=>new Date(r.date).toDateString()===day),by={};
  rec.forEach(r=>{by[r.operator]=(by[r.operator]||0)+r.qty});
  $('stRec').innerHTML=rec.length?`<div class="stats"><div class="stat"><small>Total recebido</small><strong>${rec.reduce((a,r)=>a+r.qty,0)} un.</strong></div>${Object.entries(by).map(([o,n])=>`<div class="stat"><small>${esc(o)}</small><strong>${n} un.</strong></div>`).join('')}</div>`+rec.slice(0,15).map(r=>`<div class="row"><div class="grow"><b>${r.qty} × ${esc(r.name)}</b><small>${new Date(r.date).toLocaleTimeString('pt-BR',{timeStyle:'short'})} · ${esc(r.operator)}</small></div></div>`).join(''):'<div class="empty">Nada recebido hoje.</div>'}
-function askStock(){const id=$('stP').value,q=Math.floor(num($('stQ').value)),p=products.find(x=>x.id===id),who=$('stW').value.trim();
- if(!p)return toast('Escolha um produto','err');if(!who)return toast('Informe quem está recebendo','err');if(q<1)return toast('Informe a quantidade','err');
+function askStock(){const id=$('stP').value,q=Math.floor(num($('stQ').value)),p=products.find(x=>x.id===id),who=$('stW').value.trim()||(session&&session.operator)||L.op||'Caixa';
+ if(!p)return toast('Escolha um produto','err');if(q<1)return toast('Informe a quantidade','err');
  stPend={p,q,who};
  $('stmBody').innerHTML=`<h2>Confirmar entrada</h2><div class="stm"><b class="stm-q">+${q}</b><span class="stm-n">${esc(p.name)}</span><small>Recebido por <b>${esc(who)}</b><br>Estoque: ${p.stock} → ${p.stock+q}</small></div><div class="acts"><button class="btn" id="stmNo">Voltar <kbd>Apagar</kbd></button><button class="btn primary" id="stmOk">Confirmar <kbd>Enter</kbd></button></div>`;
  $('stmNo').onclick=closeStm;$('stmOk').onclick=doStock;$('stModal').classList.add('show')}
 function closeStm(){stPend=null;$('stModal').classList.remove('show')}
 function doStock(){if(!stPend)return;const{p,q,who}=stPend;stPend=null;
- p.stock+=q;L.rcv=who;
+ p.stock+=q;
  queue('stock_move',{p_product:p.id,p_type:'entrada',p_qty:q,p_operator:who});
  const lim=Date.now()-3*864e5;L.recv=[{date:new Date().toISOString(),operator:who,name:p.name,qty:q},...(L.recv||[])].filter(r=>new Date(r.date)>lim);
- $('stQ').value='';persist();renderAll();trySync();
+ $('stQ').value='';$('stW').value='';persist();renderAll();trySync();
  $('stmBody').innerHTML=`<div class="okv"><svg viewBox="0 0 92 92"><circle cx="46" cy="46" r="40"/><path d="M28 47l12 12 25-27"/></svg><b>+${q} ${esc(p.name)}</b><small>Estoque: ${p.stock}</small></div>`;
  setTimeout(()=>$('stModal').classList.remove('show'),1100)}
 $('stAdd').onclick=askStock;
