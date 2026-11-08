@@ -58,7 +58,7 @@ nav button:hover{color:#fff}nav button.active{background:var(--gold);color:#0d28
 .entry .en-x{color:var(--mut);font-size:18px}
 .entry input{width:96px;border:0;border-bottom:2px solid var(--pu);background:none;text-align:center;font-size:28px;font-weight:800;outline:none;padding:0}
 .entry .en-hint{margin-left:auto;font-size:12px;color:var(--mut);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.cart{margin-top:12px;padding:6px 16px 16px}
+.cart{margin-bottom:12px;padding:6px 16px 16px}
 .cl{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
 .cn{flex:1;min-width:0;font-weight:600}.cn small{display:block;font-weight:400}
 .cq{display:flex;align-items:center;gap:6px}
@@ -82,6 +82,7 @@ nav button:hover{color:#fff}nav button.active{background:var(--gold);color:#0d28
 .paper.out{animation:feed .35s ease-out}
 @keyframes feed{from{transform:translateY(-22px);opacity:.3}to{transform:none;opacity:1}}
 .ph{text-align:center;display:flex;flex-direction:column;gap:2px;margin-bottom:10px}.ph b{font-size:14px}.ph span{font-size:11px;color:#807d6e}
+.paper .its{max-height:max(130px,calc(100vh - 430px));overflow-y:auto}.it.ed{align-items:center;gap:8px;margin:6px 0}.it.ed .nm{flex:1;min-width:0}.it.ed button{flex:none;width:28px;height:28px;border-radius:9px;background:#e3f1e7;color:var(--pu);font-weight:800;font-size:17px;line-height:1;padding:0}.it.ed b{min-width:20px;text-align:center;font-size:15px}
 .paper hr{border:0;border-top:1px dashed #bdb9a8;margin:9px 0}
 .rl,.it{display:flex;justify-content:space-between;gap:10px}.it{margin:4px 0;justify-content:flex-start;align-items:baseline;gap:6px;font-size:13px;font-weight:700}.it i{font-style:normal;font-size:9px;font-weight:600;color:#6b6858}.it b{font-size:13px}.rl.top{font-weight:700}.it small{display:block;color:#8a8776;font-size:11px}
 .tot{font-weight:700;font-size:14px}
@@ -122,7 +123,7 @@ input:focus,select:focus{border-color:var(--pu)}
 @media(max-width:900px){.pdv{grid-template-columns:1fr}.right{position:static;max-height:none;overflow:visible}.grid2{grid-template-columns:1fr}}
 @media(max-width:640px){.brand span{display:none}.bar{gap:10px}.back{align-items:flex-end}.modal{border-radius:26px 26px 0 0}.entry .en-hint{display:none}.tiles{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media print{.top,.left,.right .btn,.toast,.back{display:none!important}.pdv{display:block;padding:0}.right{position:static}body{background:#fff}.paper{box-shadow:none;max-width:72mm;margin:0}.paper::after{display:none}}
+@media print{.it.ed button{display:none!important}.paper .its{max-height:none;overflow:visible}.top,.left,.right .btn,.toast,.back{display:none!important}.pdv{display:block;padding:0}.right{position:static}body{background:#fff}.paper{box-shadow:none;max-width:72mm;margin:0}.paper::after{display:none}}
 .stm{text-align:center;padding:4px 0 20px}.stm-q{display:block;font-size:68px;font-weight:800;color:var(--pu);letter-spacing:-2px;line-height:1}.stm-n{display:block;font-size:22px;font-weight:800;margin-top:8px}.stm small{display:block;margin-top:8px;font-size:13px}
 #stModal.show .modal,#cnModal.show .modal{animation:pop .24s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes pop{from{transform:translateY(20px) scale(.92);opacity:0}to{transform:none;opacity:1}}
@@ -143,7 +144,6 @@ input:focus,select:focus{border-color:var(--pu)}
 <section id="pedido" class="screen active"><div class="pdv">
  <div class="left">
   <div class="tiles" id="tiles"></div>
-  <div class="card cart"><div id="cartLines"></div></div>
  </div>
  <aside class="right"><div class="paper" id="paper"></div><button class="btn" id="printBtn">Imprimir nota</button>
   <div class="card paybox"><div class="entry" id="entry"></div><div class="foot"><div><small>Total</small><strong id="cartTotal">R$ 0,00</strong></div><button class="btn primary" id="finalizeBtn" disabled>Finalizar <kbd>Espaço</kbd></button></div></div>
@@ -288,15 +288,14 @@ function chg(id,d){const x=cart.find(a=>a.id===id),p=products.find(a=>a.id===id)
  x.qty+=d;if(x.qty<=0)cart=cart.filter(a=>a.id!==id);lastSale=null;renderCart()}
 function rm(id){cart=cart.filter(x=>x.id!==id);renderCart()}
 function renderCart(){
- $('cartLines').innerHTML=cart.length?cart.map(x=>`<div class="cl"><div class="cq"><button onclick="chg('${x.id}',-1)">−</button><b>${x.qty}</b><button onclick="chg('${x.id}',1)">+</button></div><div class="cn">${esc(x.name)}<small>${money(x.price)} cada</small></div><b>${money(x.qty*x.price)}</b><button class="x" onclick="rm('${x.id}')" aria-label="Remover">×</button></div>`).join(''):'<div class="empty">Nenhum item ainda.</div>';
  $('cartTotal').textContent=money(totalCart());$('finalizeBtn').disabled=!cart.length;renderPaper()}
 
 /* ---------- nota ---------- */
 function paperHTML(m){const s=data.shop;
- const rows=grp(m.items).map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join('')||'<div class="none">Aguardando itens</div>';
- return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr>${rows}<hr><div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div>${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl tot"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}<hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
+ const rows=(m.edit?cart.map(x=>`<div class="it ed"><span class="nm">${esc(x.name)}</span><button type="button" onclick="chg('${x.id}',-1)" aria-label="Diminuir">−</button><b>${x.qty}</b><button type="button" onclick="chg('${x.id}',1)" aria-label="Aumentar">+</button></div>`).join(''):grp(m.items).map(x=>`<div class="it"><span>${esc(x.name)}</span><i>QTD</i><b>${x.qty}</b></div>`).join(''))||'<div class="none">Aguardando itens</div>';
+ return `<div class="ph"><b>${esc(s.name)}</b>${s.line?`<span>${esc(s.line)}</span>`:''}<span>${m.date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div><hr><div class="its">${rows}</div><hr><div class="rl tot"><span>TOTAL</span><span>${money(m.total)}</span></div>${m.pay&&m.pay.method==='Dinheiro'&&m.pay.change>0?`<div class="rl tot"><span>TROCO</span><span>${money(m.pay.change)}</span></div>`:''}<hr><div class="pf">${m.pay?'<b>PAGO</b>':''}<span>${esc(s.footer)}</span></div>`}
 function renderPaper(){let m;
- if(cart.length)m={items:cart,total:totalCart(),no:0,date:new Date()};
+ if(cart.length)m={items:cart,total:totalCart(),no:0,date:new Date(),edit:true};
  else if(lastSale)m={items:lastSale.items,total:lastSale.total,no:lastSale.no||lastSale.id,date:new Date(lastSale.date),pay:{method:lastSale.method,received:lastSale.received,change:lastSale.change}};
  else m={items:[],total:0,no:0,date:new Date()};
  $('paper').innerHTML=paperHTML(m)}
@@ -454,21 +453,22 @@ document.addEventListener('keydown',e=>{
 /* ---------- impressora bluetooth (ESC/POS, 58mm) ---------- */
 const PRT_SERVICES=['000018f0-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','49535343-fe7d-4ae5-8fa9-9fafd205e455','0000ae30-0000-1000-8000-00805f9b34fb','0000fee7-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','0000fff0-0000-1000-8000-00805f9b34fb'];
 const PW=32,ENC=new TextEncoder(),wait=ms=>new Promise(r=>setTimeout(r,ms));
-let prt={dev:null,ch:null,busy:false};
+let prt={dev:null,ch:null,busy:false,auto:false};
 const prtOn=()=>!!(prt.dev&&prt.dev.gatt&&prt.dev.gatt.connected&&prt.ch);
-function prtUI(){$('prtConn').innerHTML=`<i class="dot${prtOn()?' on':''}"></i>${prtOn()?esc(prt.dev.name||'Impressora'):'Conectar impressora'}`}
+function prtUI(){$('prtConn').innerHTML=`<i class="dot${prtOn()?' on':''}"></i>${prtOn()?esc(prt.dev.name||'Impressora'):prt.auto?'Procurando impressora…':'Conectar impressora'}`}
 async function prtOpen(dev){
  const srv=await dev.gatt.connect();let ch=null;
  for(const s of await srv.getPrimaryServices()){
   for(const c of await s.getCharacteristics()){if(c.properties.writeWithoutResponse||c.properties.write){ch=c;break}}
   if(ch)break}
  if(!ch)throw new Error('esta impressora não aceita Bluetooth pelo navegador');
- prt.dev=dev;prt.ch=ch;dev.ongattserverdisconnected=()=>{prt.ch=null;prtUI()};prtUI()}
+ prt.dev=dev;prt.ch=ch;try{L.prtId=dev.id;L.prtName=dev.name||L.prtName;persist()}catch(e){}
+ dev.ongattserverdisconnected=()=>{prt.ch=null;prtUI();setTimeout(prtAuto,1500)};prtUI()}
 async function prtConnect(ask){
  if(!navigator.bluetooth)throw new Error('use o Chrome no Android');
  let dev=prt.dev;
- if(!dev&&navigator.bluetooth.getDevices){try{const l=await navigator.bluetooth.getDevices();dev=l.find(d=>/MPT/i.test(d.name||''))||l[0]}catch(e){}}
- if(!dev&&ask)dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:PRT_SERVICES});
+ if(!dev&&navigator.bluetooth.getDevices){try{const l=await navigator.bluetooth.getDevices();dev=(L.prtId&&l.find(d=>d.id===L.prtId))||l.find(d=>/MPT/i.test(d.name||''))||l[0]}catch(e){}}
+ if(!dev&&ask)dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:(L.prtName||'MPT').slice(0,3)}],optionalServices:PRT_SERVICES});
  if(!dev)throw new Error('impressora não conectada');
  await prtOpen(dev)}
 const asc=s=>String(s).replace(/ /g,' ').replace(/×/g,'x').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7e]/g,'?');
@@ -505,8 +505,17 @@ function closingReceipt(c){const o=[],sh=data.shop,t=x=>o.push(...ENC.encode(asc
  if(c.diff<0){b(0x1b,0x61,1,0x1b,0x45,1);t('QUEBRA DE CAIXA');b(0x1b,0x61,0);t(lr('Faltou',money(-c.diff)));b(0x1b,0x45,0);t(L)}
  b(0x1b,0x64,4);
  return new Uint8Array(o)}
-$('prtConn').onclick=async()=>{try{prt.dev=null;prt.ch=null;await prtConnect(true);toast('Impressora conectada: '+(prt.dev.name||''),'ok')}catch(e){toast(e.name==='NotFoundError'?'Nenhuma impressora escolhida':'Não conectou: '+(e.message||e),'err')}};
-prtUI();if(navigator.bluetooth&&navigator.bluetooth.getDevices)prtConnect(false).catch(()=>{});
+async function prtAuto(){
+ if(!navigator.bluetooth||!navigator.bluetooth.getDevices||prt.busy||prt.auto||prtOn())return;
+ prt.auto=true;prtUI();
+ try{const l=await navigator.bluetooth.getDevices();
+  const dev=(L.prtId&&l.find(d=>d.id===L.prtId))||l.find(d=>/MPT/i.test(d.name||''))||l[0];
+  if(dev)await prtOpen(dev)}
+ catch(e){}
+ prt.auto=false;prtUI()}
+$('prtConn').onclick=async()=>{if(prtOn()){toast('Impressora já conectada: '+(prt.dev.name||''),'ok');return}try{prt.dev=null;prt.ch=null;await prtConnect(true);toast('Impressora conectada: '+(prt.dev.name||''),'ok')}catch(e){toast(e.name==='NotFoundError'?'Nenhuma impressora escolhida':'Não conectou: '+(e.message||e),'err')}};
+prtUI();prtAuto();setInterval(prtAuto,8000);
+addEventListener('focus',prtAuto);document.addEventListener('visibilitychange',()=>{if(!document.hidden)prtAuto()});
 
 /* ---------- tela cheia + instalação ---------- */
 const isApp=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone;
